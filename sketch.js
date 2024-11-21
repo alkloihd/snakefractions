@@ -1,7 +1,7 @@
 // Game Constants
-const GRID_WIDTH = 26;
-const GRID_HEIGHT = 17;
-const CELL_SIZE = 800 / GRID_WIDTH;
+const GRID_WIDTH = 20; // Number of columns
+const GRID_HEIGHT = 17; // Number of rows
+const CELL_SIZE = 840 / GRID_WIDTH; // Cell size based on canvas width
 const BG_COLOR = '#ADD8E6'; // Light blue background
 const TOP_PANEL_COLOR = '#87CEEB'; // Sky blue top panel
 const FOOD_COLOR = '#FFFFFF'; // White background for food
@@ -57,7 +57,7 @@ let canvas; // Declare canvas globally
 let canvasX, canvasY; // To store canvas position
 
 function setup() {
-    canvas = createCanvas(CELL_SIZE * GRID_WIDTH, CELL_SIZE * GRID_HEIGHT + 100); // Increased height for game modes
+    canvas = createCanvas(840, 850); // Updated canvas size
     canvas.parent('game-container');
     frameRate(FPS_VALUES[selected_speed]);
     textFont('Arial');
@@ -145,13 +145,13 @@ function keyPressed() {
 function createWelcomeScreen() {
     // Create Speed Selection Buttons
     let total_buttons_width = 5 * 60 + 4 * 20;
-    let start_x = (width - total_buttons_width) / 2;
+    let start_x = (840 - total_buttons_width) / 2;
 
     for (let i = 1; i <= 5; i++) {
         let btn = createButton(i.toString());
         btn.position(start_x + (i - 1) * 80 + canvasX, 220 + canvasY); // Adjusted position
         btn.size(60, 60);
-        btn.style('font-size', '20px');
+        btn.style('font-size', '18px'); // Increased font size
         btn.style('background-color', '#FFF');
         btn.style('border', '2px solid #000');
         btn.mousePressed(() => selectSpeed(i));
@@ -160,26 +160,26 @@ function createWelcomeScreen() {
 
     // Create Start Button
     startButton = createButton('Start Game');
-    startButton.position(width / 2 - 100 + canvasX, 300 + canvasY); // Adjusted position
+    startButton.position(840 / 2 - 100 + canvasX, 300 + canvasY); // Adjusted position
     startButton.size(200, 60);
-    startButton.style('font-size', '24px');
+    startButton.style('font-size', '20px'); // Increased font size
     startButton.style('background-color', '#FFF');
     startButton.style('border', '2px solid #000');
     startButton.mousePressed(() => startGame());
 
     // Create Game Mode Selection Text
     modeText = createP(modeLabel); // Assign to global variable
-    modeText.position(width / 2 - 100 + canvasX, 400 + canvasY);
-    modeText.style('font-size', '24px');
+    modeText.position(840 / 2 - 100 + canvasX, 400 + canvasY);
+    modeText.style('font-size', '20px'); // Increased font size
     modeText.style('color', '#000');
     modeText.style('margin', '20px 0 10px 0');
 
     // Create Game Mode Buttons arranged in 2x2 grid
     let mode_positions = [
-        { x: width / 2 - 220 + canvasX, y: 450 + canvasY },
-        { x: width / 2 + 60 + canvasX, y: 450 + canvasY },
-        { x: width / 2 - 220 + canvasX, y: 550 + canvasY },
-        { x: width / 2 + 60 + canvasX, y: 550 + canvasY }
+        { x: 840 / 2 - 220 + canvasX, y: 450 + canvasY },
+        { x: 840 / 2 + 60 + canvasX, y: 450 + canvasY },
+        { x: 840 / 2 - 220 + canvasX, y: 550 + canvasY },
+        { x: 840 / 2 + 60 + canvasX, y: 550 + canvasY }
     ];
 
     let modes = [
@@ -193,7 +193,7 @@ function createWelcomeScreen() {
         let btn = createButton(modes[i]);
         btn.position(mode_positions[i].x, mode_positions[i].y);
         btn.size(200, 60);
-        btn.style('font-size', '20px');
+        btn.style('font-size', '18px'); // Increased font size
         btn.style('background-color', '#FFF');
         btn.style('border', '2px solid #000');
         btn.mousePressed(() => selectMode(modes[i]));
@@ -313,13 +313,14 @@ function generateEquivalentProblem() {
 }
 
 function generateRoundingProblem() {
-    // Round decimals to a specified place
-    let decimal = floor(random(1000, 10000)) / 1000; // e.g., 4.593 to 9.999
+    // Round decimals to a specified place (only ones, tenths, or hundredths)
+    let decimal = floor(random(1000, 10000)) / 1000; // e.g., 1.000 to 9.999
     decimal = parseFloat(decimal.toFixed(3)); // Ensure it's a number with 3 decimal places
-    let place = floor(random(1, 4)); // 1: tenths, 2: hundredths, 3: thousandths
+    let placeOptions = [0, 1, 2]; // 0: ones, 1: tenths, 2: hundredths
+    let place = random(placeOptions); // Randomly select from 0,1,2
     let question = `Round ${decimal} to the ${getPlaceName(place)} place.`;
     let rounded = roundToPlace(decimal, place);
-    let correct_answer = rounded.toFixed(place);
+    let correct_answer = (place === 0) ? rounded.toString() : rounded.toFixed(place);
     let incorrect_answers = generateIncorrectRoundingAnswers(rounded, place);
     return { question, correct_answer, incorrect_answers };
 }
@@ -338,9 +339,9 @@ function generatePercentageProblem() {
 
 function getPlaceName(place) {
     switch(place) {
+        case 0: return 'ones';
         case 1: return 'tenths';
         case 2: return 'hundredths';
-        case 3: return 'thousandths';
         default: return 'tenths';
     }
 }
@@ -393,10 +394,22 @@ function generateIncorrectRoundingAnswers(correct, place) {
     let incorrect = new Set();
     while (incorrect.size < 3) {
         let delta = floor(random(-3, 4));
-        let wrong = correct + delta * Math.pow(10, -place);
+        let wrong;
+        if (place === 0) {
+            wrong = correct + delta;
+        } else {
+            wrong = correct + delta * Math.pow(10, -place);
+        }
         // Ensure the wrong answer is different and within a valid range
-        if (wrong < 0 || parseFloat(wrong.toFixed(place)) === parseFloat(correct.toFixed(place))) continue;
-        incorrect.add(wrong.toFixed(place));
+        if (wrong < 0 || (place === 0 && wrong.toFixed(0) === correct.toFixed(0)) ||
+            (place === 1 && wrong.toFixed(1) === correct.toFixed(1)) ||
+            (place === 2 && wrong.toFixed(2) === correct.toFixed(2))) continue;
+        if (place === 0) {
+            wrong = Math.round(wrong).toString();
+        } else {
+            wrong = wrong.toFixed(place);
+        }
+        incorrect.add(wrong);
     }
     return Array.from(incorrect);
 }
@@ -526,14 +539,14 @@ function drawTopPanel() {
 
     // Draw Math Problem
     fill(TEXT_COLOR);
-    textSize(24); // Increased font size for better visibility
+    textSize(20); // Adjusted font size for visibility
     textAlign(CENTER, CENTER);
-    text(`Solve: ${current_problem.question}`, width / 2, 60);
+    text(`Solve: ${current_problem.question}`, width / 2, 50);
 
     // Draw Score and Lives
-    textSize(20);
+    textSize(16);
     textAlign(RIGHT, TOP);
-    text(`Score: ${score_correct}/${score_total}    Lives: ${lives}`, width - 20, 20);
+    text(`Score: ${score_correct}/${score_total}    Lives: ${lives}`, width - 20, 10);
 }
 
 function drawGrid() {
@@ -550,23 +563,23 @@ function drawGrid() {
 function drawSnake() {
     for (let i = 0; i < snake.length; i++) {
         let segment = snake[i];
-        let seg_x = segment.x * CELL_SIZE + CELL_SIZE / 4;
-        let seg_y = segment.y * CELL_SIZE + 100 + CELL_SIZE / 4;
+        let seg_x = segment.x * CELL_SIZE + CELL_SIZE * 0.25;
+        let seg_y = segment.y * CELL_SIZE + 100 + CELL_SIZE * 0.25;
         fill(SNAKE_COLOR);
         noStroke();
-        rect(seg_x, seg_y, CELL_SIZE / 2, CELL_SIZE / 2);
+        rect(seg_x, seg_y, CELL_SIZE * 0.5, CELL_SIZE * 0.5);
         if (i === 0) {
             // Draw smiley face on the head
             fill(0);
-            ellipse(seg_x + CELL_SIZE / 4, seg_y + CELL_SIZE / 4, CELL_SIZE / 8, CELL_SIZE / 8); // Head
+            ellipse(seg_x + CELL_SIZE * 0.25, seg_y + CELL_SIZE * 0.25, CELL_SIZE * 0.125, CELL_SIZE * 0.125); // Head
             // Eyes
-            ellipse(seg_x + CELL_SIZE / 4 - CELL_SIZE / 16, seg_y + CELL_SIZE / 4 - CELL_SIZE / 16, CELL_SIZE / 32, CELL_SIZE / 32);
-            ellipse(seg_x + CELL_SIZE / 4 + CELL_SIZE / 16, seg_y + CELL_SIZE / 4 - CELL_SIZE / 16, CELL_SIZE / 32, CELL_SIZE / 32);
+            ellipse(seg_x + CELL_SIZE * 0.25 - CELL_SIZE * 0.0625, seg_y + CELL_SIZE * 0.25 - CELL_SIZE * 0.0625, CELL_SIZE * 0.03125, CELL_SIZE * 0.03125);
+            ellipse(seg_x + CELL_SIZE * 0.25 + CELL_SIZE * 0.0625, seg_y + CELL_SIZE * 0.25 - CELL_SIZE * 0.0625, CELL_SIZE * 0.03125, CELL_SIZE * 0.03125);
             // Mouth
             noFill();
             stroke(0);
             strokeWeight(1);
-            arc(seg_x + CELL_SIZE / 4, seg_y + CELL_SIZE / 4 + CELL_SIZE / 32, CELL_SIZE / 8, CELL_SIZE / 8, 0, PI);
+            arc(seg_x + CELL_SIZE * 0.25, seg_y + CELL_SIZE * 0.25 + CELL_SIZE * 0.015625, CELL_SIZE * 0.125, CELL_SIZE * 0.125, 0, PI);
         }
     }
 }
@@ -580,7 +593,7 @@ function drawFoodItems() {
         noStroke();
 
         // Draw text (fractions, decimals, percentages)
-        textSize(CELL_SIZE * 0.375); // Increased font size by ~50%
+        textSize(CELL_SIZE * 0.35); // Increased font size for readability
         textAlign(CENTER, CENTER);
         text(item.value, (item.x + 0.5) * CELL_SIZE, (item.y + 0.5) * CELL_SIZE + 100);
     }
@@ -663,13 +676,13 @@ function drawCheckMarks() {
 function drawWelcomeScreen() {
     // Draw Title
     fill(TEXT_COLOR);
-    textSize(32);
+    textSize(28); // Increased font size
     textAlign(CENTER, CENTER);
     text(title, width / 2, 80); // y-position set to 80px
 
     // Draw Subtitle
-    textSize(20);
-    text(subtitle, width / 2, 130); // y-position set to 130px
+    textSize(16); // Increased font size
+    text(subtitle, width / 2, 120); // y-position set to 120px
 
     // Speed and Mode selection are handled by buttons
 }
@@ -680,10 +693,10 @@ function drawPauseMenu() {
     rect(0, 0, width, height);
 
     fill(TEXT_COLOR);
-    textSize(24);
+    textSize(20); // Adjusted font size
     textAlign(CENTER, CENTER);
-    text("Game Paused", width / 2, height / 2 - 50);
-    text("Press 'C' to Continue or 'R' to Restart.", width / 2, height / 2);
+    text("Game Paused", width / 2, height / 2 - 30);
+    text("Press 'C' to Continue or 'R' to Restart.", width / 2, height / 2 + 10);
 }
 
 function drawGameOver() {
@@ -692,12 +705,12 @@ function drawGameOver() {
     rect(0, 0, width, height);
 
     fill(TEXT_COLOR);
-    textSize(40);
+    textSize(30); // Adjusted font size
     textAlign(CENTER, CENTER);
-    text("Game Over!", width / 2, height / 2 - 100);
+    text("Game Over!", width / 2, height / 2 - 80);
 
-    textSize(24);
-    text(`Final Score: ${score_correct}/${score_total}`, width / 2, height / 2 - 50);
+    textSize(20); // Adjusted font size
+    text(`Final Score: ${score_correct}/${score_total}`, width / 2, height / 2 - 40);
     text("Press 'R' to Restart or 'Q' to Quit.", width / 2, height / 2);
 }
 
