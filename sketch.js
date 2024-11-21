@@ -57,7 +57,7 @@ let canvas; // Declare canvas globally
 let canvasX, canvasY; // To store canvas position
 
 function setup() {
-    canvas = createCanvas(CELL_SIZE * GRID_WIDTH, CELL_SIZE * GRID_HEIGHT + 200); // Increased height for game modes
+    canvas = createCanvas(CELL_SIZE * GRID_WIDTH, CELL_SIZE * GRID_HEIGHT + 100); // Increased height for game modes
     canvas.parent('game-container');
     frameRate(FPS_VALUES[selected_speed]);
     textFont('Arial');
